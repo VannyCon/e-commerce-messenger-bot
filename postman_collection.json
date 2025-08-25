@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "Facebook Messenger Food Bot API",
+    "description": "Test collection for the deployed food ordering bot",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            ""
+          ]
+        },
+        "description": "Test if the bot is running and responsive"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Webhook Verification",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook?hub.mode=subscribe&hub.challenge=test123&hub.verify_token=food_bot_secure_token_2024",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ],
+          "query": [
+            {
+              "key": "hub.mode",
+              "value": "subscribe"
+            },
+            {
+              "key": "hub.challenge",
+              "value": "test123"
+            },
+            {
+              "key": "hub.verify_token",
+              "value": "food_bot_secure_token_2024"
+            }
+          ]
+        },
+        "description": "Test webhook verification endpoint (Facebook uses this)"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Simulate Menu Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_123\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"menu\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Simulate a user typing 'menu' to see the food options"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Simulate Food Order (F001)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_123\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"F001\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Simulate ordering Margherita Pizza (F001)"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Simulate Address Input",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_123\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"123 Main Street, New York, NY 10001\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Simulate providing delivery address"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Simulate Phone Input",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_123\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"+1-555-123-4567\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Simulate providing phone number to complete order"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Test Different Food Codes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_456\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"F007\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Test ordering BBQ Ribs (F007) - change F007 to F001-F008 to test other items"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Test Invalid Command",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"object\": \"page\",\n  \"entry\": [\n    {\n      \"messaging\": [\n        {\n          \"sender\": {\n            \"id\": \"test_user_789\"\n          },\n          \"recipient\": {\n            \"id\": \"test_page_456\"\n          },\n          \"timestamp\": 1234567890,\n          \"message\": {\n            \"mid\": \"test_message_id\",\n            \"text\": \"invalid command\"\n          }\n        }\n      ]\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://e-commerce-messenger-bot.vercel.app/webhook",
+          "protocol": "https",
+          "host": [
+            "e-commerce-messenger-bot",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "webhook"
+          ]
+        },
+        "description": "Test how the bot handles invalid/unknown commands"
+      },
+      "response": []
+    }
+  ]
+}

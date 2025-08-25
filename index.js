@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const { db } = require('./lib/supabase');
 require('dotenv').config();
 
 const app = express();
@@ -10,20 +11,42 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Food menu with codes
-const foodMenu = {
-  'F001': { name: 'Margherita Pizza', price: 12.99, description: 'Classic pizza with tomato sauce, mozzarella, and basil' },
-  'F002': { name: 'Chicken Burger', price: 9.99, description: 'Grilled chicken breast with lettuce, tomato, and mayo' },
-  'F003': { name: 'Caesar Salad', price: 8.99, description: 'Fresh romaine lettuce with caesar dressing and croutons' },
-  'F004': { name: 'Spaghetti Carbonara', price: 14.99, description: 'Creamy pasta with bacon, eggs, and parmesan cheese' },
-  'F005': { name: 'Fish & Chips', price: 13.99, description: 'Beer-battered fish with crispy fries' },
-  'F006': { name: 'Vegetable Stir Fry', price: 10.99, description: 'Mixed vegetables with teriyaki sauce and rice' },
-  'F007': { name: 'BBQ Ribs', price: 18.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
-  'F008': { name: 'Chocolate Cake', price: 6.99, description: 'Rich chocolate cake with chocolate frosting' }
-};
+// Food menu will now be loaded from Supabase
+let foodMenu = {};
 
 // User session storage (in production, use a database)
 const userSessions = {};
+
+// Load products from Supabase on startup
+async function loadProducts() {
+  try {
+    const products = await db.getAllProducts();
+    foodMenu = {};
+    products.forEach(product => {
+      foodMenu[product.code] = {
+        id: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        description: product.description,
+        category: product.category
+      };
+    });
+    console.log(`✅ Loaded ${products.length} products from Supabase`);
+  } catch (error) {
+    console.error('❌ Error loading products from Supabase:', error);
+    // Fallback to hardcoded menu if database fails
+    foodMenu = {
+      'F001': { name: 'Margherita Pizza', price: 12.99, description: 'Classic pizza with tomato sauce, mozzarella, and basil' },
+      'F002': { name: 'Chicken Burger', price: 9.99, description: 'Grilled chicken breast with lettuce, tomato, and mayo' },
+      'F003': { name: 'Caesar Salad', price: 8.99, description: 'Fresh romaine lettuce with caesar dressing and croutons' },
+      'F004': { name: 'Spaghetti Carbonara', price: 14.99, description: 'Creamy pasta with bacon, eggs, and parmesan cheese' },
+      'F005': { name: 'Fish & Chips', price: 13.99, description: 'Beer-battered fish with crispy fries' },
+      'F006': { name: 'Vegetable Stir Fry', price: 10.99, description: 'Mixed vegetables with teriyaki sauce and rice' },
+      'F007': { name: 'BBQ Ribs', price: 18.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
+      'F008': { name: 'Chocolate Cake', price: 6.99, description: 'Rich chocolate cake with chocolate frosting' }
+    };
+  }
+}
 
 // Verification endpoint for Facebook webhook
 app.get('/webhook', (req, res) => {
@@ -46,7 +69,7 @@ app.get('/webhook', (req, res) => {
 // Handle incoming messages
 app.post('/webhook', (req, res) => {
   const body = req.body;
-
+  console.log('Webhook received:', body);
   // Handle regular page messages
   if (body.object === 'page') {
     body.entry.forEach(entry => {
@@ -81,7 +104,7 @@ app.post('/webhook', (req, res) => {
 });
 
 // Handle incoming messages
-function handleMessage(sender_psid, received_message) {
+async function handleMessage(sender_psid, received_message) {
   let response;
   const messageText = received_message.text;
 
@@ -106,28 +129,76 @@ function handleMessage(sender_psid, received_message) {
       userSession.step = 'completed';
       
       let orderSummary;
+      let savedOrder = null;
       
-      // Handle cart orders vs regular food code orders
-      if (userSession.cartOrder) {
-        // Cart order completion
-        orderSummary = `
+      try {
+        // Save order to Supabase
+        const orderData = {
+          messenger_id: sender_psid,
+          delivery_address: userSession.address,
+          customer_phone: userSession.phone,
+          payment_method: 'cash_on_delivery'
+        };
+
+        // Handle cart orders vs regular food code orders
+        if (userSession.cartOrder) {
+          // Cart order
+          orderData.total_amount = userSession.cartOrder.total;
+          orderData.currency = userSession.cartOrder.currency;
+          orderData.notes = userSession.cartOrder.note;
+          orderData.items = userSession.cartOrder.products.map(product => ({
+            product_id: null, // Cart products might not have product_id
+            product_code: product.code || 'CART',
+            product_name: product.name,
+            quantity: product.quantity,
+            unit_price: product.unit_price
+          }));
+
+          savedOrder = await db.createOrder(orderData);
+          
+          orderSummary = `
 🎉 Cart Order Confirmed! 🎉
+📋 Order #${savedOrder.order_number}
 
 🛒 Order Details:`;
-        
-        userSession.cartOrder.products.forEach(product => {
-          orderSummary += `
+          
+          userSession.cartOrder.products.forEach(product => {
+            orderSummary += `
 • ${product.name} (Qty: ${product.quantity})
   ${product.unit_price} × ${product.quantity} = ${product.unit_price * product.quantity} ${userSession.cartOrder.currency}`;
-        });
-        
-        orderSummary += `
+          });
+          
+          orderSummary += `
 
 💰 Total: ${userSession.cartOrder.total} ${userSession.cartOrder.currency}`;
-        
-        if (userSession.cartOrder.note) {
-          orderSummary += `
+          
+          if (userSession.cartOrder.note) {
+            orderSummary += `
 📝 Note: ${userSession.cartOrder.note}`;
+          }
+          
+        } else {
+          // Regular food code order
+          orderData.total_amount = userSession.selectedFood.price;
+          orderData.currency = 'USD';
+          orderData.items = [{
+            product_id: userSession.selectedFood.id,
+            product_code: userSession.selectedFoodCode,
+            product_name: userSession.selectedFood.name,
+            quantity: 1,
+            unit_price: userSession.selectedFood.price
+          }];
+
+          savedOrder = await db.createOrder(orderData);
+          
+          orderSummary = `
+🎉 Order Confirmed! 🎉
+📋 Order #${savedOrder.order_number}
+
+📝 Order Details:
+• Item: ${userSession.selectedFood.name}
+• Price: $${userSession.selectedFood.price}
+• Description: ${userSession.selectedFood.description}`;
         }
         
         orderSummary += `
@@ -137,24 +208,21 @@ function handleMessage(sender_psid, received_message) {
 💳 Payment Method: Cash on Delivery
 ⏰ Estimated delivery time: 30-45 minutes
 
-Thank you for your cart order! Our delivery team will contact you shortly.`;
-        
-      } else {
-        // Regular food code order completion
-        orderSummary = `
-🎉 Order Confirmed! 🎉
+Thank you for your order! Our delivery team will contact you shortly.`;
 
-📝 Order Details:
-• Item: ${userSession.selectedFood.name}
-• Price: $${userSession.selectedFood.price}
-• Description: ${userSession.selectedFood.description}
+      } catch (error) {
+        console.error('Error saving order to database:', error);
+        orderSummary = `
+🎉 Order Received! 🎉
+
+Your order has been received and our team has been notified. However, there was a technical issue with our system. Please save this conversation as your order confirmation.
 
 📍 Delivery Address: ${userSession.address}
 📞 Contact: ${userSession.phone}
 💳 Payment Method: Cash on Delivery
 ⏰ Estimated delivery time: 30-45 minutes
 
-Thank you for your order! Our delivery team will contact you shortly.`;
+Our team will contact you shortly to confirm your order.`;
       }
       
       orderSummary += `
@@ -174,6 +242,7 @@ Type 'menu' to see our full menu or order again! 🍕🍔`;
     else if (foodMenu[upperText]) {
       const selectedFood = foodMenu[upperText];
       userSession.selectedFood = selectedFood;
+      userSession.selectedFoodCode = upperText;
       userSession.step = 'awaiting_address';
       
       response = {
@@ -273,6 +342,7 @@ function handlePostback(sender_psid, received_postback) {
       }
       const userSession = userSessions[sender_psid];
       userSession.selectedFood = foodMenu[foodCode];
+      userSession.selectedFoodCode = foodCode;
       userSession.step = 'awaiting_address';
       
       response = {
@@ -383,10 +453,17 @@ app.get('/privacy', (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Messenger Food Bot is running on port ${PORT}`);
-  console.log(`🔗 Webhook URL: http://localhost:${PORT}/webhook`);
-});
+// Initialize and start server
+async function startServer() {
+  // Load products from Supabase
+  await loadProducts();
+  
+  app.listen(PORT, () => {
+    console.log(`🚀 Messenger Food Bot is running on port ${PORT}`);
+    console.log(`🔗 Webhook URL: http://localhost:${PORT}/webhook`);
+  });
+}
+
+startServer().catch(console.error);
 
 module.exports = app;
