@@ -258,7 +258,7 @@ app.get('/', (req, res) => {
     status: 'running',
     message: 'Facebook Messenger Food Bot is active!'+process.env.VERIFY_TOKEN,
     endpoints: {
-      webhook: '/webhook (GET for verification, POST for messages)',
+      webhook: '/webhook (GET for verification, POST for messages)'+process.env.PAGE_ACCESS_TOKEN,
       health: '/ (this endpoint)'
     }
   });
