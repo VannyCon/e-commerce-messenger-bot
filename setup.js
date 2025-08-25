@@ -29,7 +29,11 @@ VERIFY_TOKEN=${verifyToken}
 PAGE_ACCESS_TOKEN=${pageToken}
 
 # App Configuration
-PORT=3000`;
+PORT=3000
+
+# Supabase Configuration
+SUPABASE_URL=https://jsneposfxfuyweogmmrl.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzbmVwb3NmeGZ1eXdlb2dtbXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMjEwNjYsImV4cCI6MjA3MTY5NzA2Nn0.9sRYixKXBZgwRqPxDPCb_0Nx-9n89-JA-LIpS4WiMxY`;
 
     fs.writeFileSync('.env', envContent);
     
