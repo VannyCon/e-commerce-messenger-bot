@@ -36,14 +36,14 @@ async function loadProducts() {
     console.error('❌ Error loading products from Supabase:', error);
     // Fallback to hardcoded menu if database fails
     foodMenu = {
-      'F001': { name: 'Margherita Pizza', price: 12.99, description: 'Classic pizza with tomato sauce, mozzarella, and basil' },
-      'F002': { name: 'Chicken Burger', price: 9.99, description: 'Grilled chicken breast with lettuce, tomato, and mayo' },
-      'F003': { name: 'Caesar Salad', price: 8.99, description: 'Fresh romaine lettuce with caesar dressing and croutons' },
-      'F004': { name: 'Spaghetti Carbonara', price: 14.99, description: 'Creamy pasta with bacon, eggs, and parmesan cheese' },
-      'F005': { name: 'Fish & Chips', price: 13.991, description: 'Beer-battered fish with crispy fries' },
-      'F006': { name: 'Vegetable Stir Fry', price: 10.99, description: 'Mixed vegetables with teriyaki sauce and rice' },
-      'F007': { name: 'BBQ Ribs', price: 18.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
-      'F008': { name: 'Chocolate Cake', price: 6.99, description: 'Rich chocolate cake with chocolate frosting' }
+      'F001': { name: 'Margherita Pizza', price: 100.99, description: 'Classic pizza with tomato sauce, mozzarella, and basil' },
+      'F002': { name: 'Chicken Burger', price: 229.99, description: 'Grilled chicken breast with lettuce, tomato, and mayo' },
+      'F003': { name: 'Caesar Salad', price: 338.99, description: 'Fresh romaine lettuce with caesar dressing and croutons' },
+      'F004': { name: 'Spaghetti Carbonara', price: 449.99, description: 'Creamy pasta with bacon, eggs, and parmesan cheese' },
+      'F005': { name: 'Fish & Chips', price: 559.99, description: 'Beer-battered fish with crispy fries' },
+      'F006': { name: 'Vegetable Stir Fry', price: 669.99, description: 'Mixed vegetables with teriyaki sauce and rice' },
+      'F007': { name: 'BBQ Ribs', price: 779.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
+      'F008': { name: 'Chocolate Cake', price: 26.99, description: 'Rich chocolate cake with chocolate frosting' }
     };
   }
 }
