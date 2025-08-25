@@ -473,7 +473,7 @@ app.get('/', (req, res) => {
     message: 'Facebook Messenger Food Bot is active!',
     endpoints: {
       webhook: '/webhook (GET for verification, POST for messages)'+process.env.SUPABASE_ANON_KEY,
-      health: '/ (this endpoint)'+process.env.SUPABASE_ANON_KEY,
+      health: '/ (this endpoint)'+process.env.SUPABASE_URL,
       privacy: '/privacy (Privacy Policy)'
     }
   });
