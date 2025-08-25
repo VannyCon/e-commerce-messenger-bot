@@ -259,9 +259,31 @@ app.get('/', (req, res) => {
     message: 'Facebook Messenger Food Bot is active!',
     endpoints: {
       webhook: '/webhook (GET for verification, POST for messages)',
-      health: '/ (this endpoint)'
+      health: '/ (this endpoint)',
+      privacy: '/privacy (Privacy Policy)'
     }
   });
+});
+
+// Privacy policy endpoint
+app.get('/privacy', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    const privacyPolicy = fs.readFileSync(path.join(__dirname, 'privacy-policy.html'), 'utf8');
+    res.setHeader('Content-Type', 'text/html');
+    res.send(privacyPolicy);
+  } catch (error) {
+    res.status(404).send(`
+      <html>
+        <body>
+          <h1>Privacy Policy</h1>
+          <p>Our food delivery bot respects your privacy. We only collect delivery address and phone number to process your food orders. Contact us for more information.</p>
+        </body>
+      </html>
+    `);
+  }
 });
 
 // Start server
