@@ -256,9 +256,9 @@ async function callSendAPI(sender_psid, response) {
 app.get('/', (req, res) => {
   res.json({
     status: 'running',
-    message: 'Facebook Messenger Food Bot is active!'+process.env.VERIFY_TOKEN,
+    message: 'Facebook Messenger Food Bot is active!',
     endpoints: {
-      webhook: '/webhook (GET for verification, POST for messages)'+process.env.PAGE_ACCESS_TOKEN,
+      webhook: '/webhook (GET for verification, POST for messages)',
       health: '/ (this endpoint)'
     }
   });
