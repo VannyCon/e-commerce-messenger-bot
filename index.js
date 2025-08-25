@@ -40,7 +40,7 @@ async function loadProducts() {
       'F002': { name: 'Chicken Burger', price: 9.99, description: 'Grilled chicken breast with lettuce, tomato, and mayo' },
       'F003': { name: 'Caesar Salad', price: 8.99, description: 'Fresh romaine lettuce with caesar dressing and croutons' },
       'F004': { name: 'Spaghetti Carbonara', price: 14.99, description: 'Creamy pasta with bacon, eggs, and parmesan cheese' },
-      'F005': { name: 'Fish & Chips', price: 13.99, description: 'Beer-battered fish with crispy fries' },
+      'F005': { name: 'Fish & Chips', price: 13.991, description: 'Beer-battered fish with crispy fries' },
       'F006': { name: 'Vegetable Stir Fry', price: 10.99, description: 'Mixed vegetables with teriyaki sauce and rice' },
       'F007': { name: 'BBQ Ribs', price: 18.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
       'F008': { name: 'Chocolate Cake', price: 6.99, description: 'Rich chocolate cake with chocolate frosting' }
