@@ -27,6 +27,7 @@ const userSessions = {};
 
 // Verification endpoint for Facebook webhook
 app.get('/webhook', (req, res) => {
+
   const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -255,7 +256,7 @@ async function callSendAPI(sender_psid, response) {
 app.get('/', (req, res) => {
   res.json({
     status: 'running',
-    message: 'Facebook Messenger Food Bot is active!',
+    message: 'Facebook Messenger Food Bot is active!'+process.env.VERIFY_TOKEN,
     endpoints: {
       webhook: '/webhook (GET for verification, POST for messages)',
       health: '/ (this endpoint)'
