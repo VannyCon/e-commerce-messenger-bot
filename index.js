@@ -47,10 +47,11 @@ app.get('/webhook', (req, res) => {
 app.post('/webhook', (req, res) => {
   const body = req.body;
 
+  // Handle regular page messages
   if (body.object === 'page') {
     body.entry.forEach(entry => {
       const webhook_event = entry.messaging[0];
-      console.log(webhook_event);
+      console.log('Messenger Event:', webhook_event);
 
       const sender_psid = webhook_event.sender.id;
 
@@ -62,7 +63,19 @@ app.post('/webhook', (req, res) => {
     });
 
     res.status(200).send('EVENT_RECEIVED');
-  } else {
+  }
+  // Handle shopping cart webhooks
+  else if (body.field === 'send_cart') {
+    console.log('Shopping Cart Event:', body);
+    handleCartOrder(body.value);
+    res.status(200).send('EVENT_RECEIVED');
+  }
+  // Handle other webhook types
+  else if (body.field) {
+    console.log('Other Webhook Event:', body.field, body);
+    res.status(200).send('EVENT_RECEIVED');
+  }
+  else {
     res.sendStatus(404);
   }
 });
@@ -92,7 +105,43 @@ function handleMessage(sender_psid, received_message) {
       userSession.phone = messageText;
       userSession.step = 'completed';
       
-      const orderSummary = `
+      let orderSummary;
+      
+      // Handle cart orders vs regular food code orders
+      if (userSession.cartOrder) {
+        // Cart order completion
+        orderSummary = `
+🎉 Cart Order Confirmed! 🎉
+
+🛒 Order Details:`;
+        
+        userSession.cartOrder.products.forEach(product => {
+          orderSummary += `
+• ${product.name} (Qty: ${product.quantity})
+  ${product.unit_price} × ${product.quantity} = ${product.unit_price * product.quantity} ${userSession.cartOrder.currency}`;
+        });
+        
+        orderSummary += `
+
+💰 Total: ${userSession.cartOrder.total} ${userSession.cartOrder.currency}`;
+        
+        if (userSession.cartOrder.note) {
+          orderSummary += `
+📝 Note: ${userSession.cartOrder.note}`;
+        }
+        
+        orderSummary += `
+
+📍 Delivery Address: ${userSession.address}
+📞 Contact: ${userSession.phone}
+💳 Payment Method: Cash on Delivery
+⏰ Estimated delivery time: 30-45 minutes
+
+Thank you for your cart order! Our delivery team will contact you shortly.`;
+        
+      } else {
+        // Regular food code order completion
+        orderSummary = `
 🎉 Order Confirmed! 🎉
 
 📝 Order Details:
@@ -100,19 +149,17 @@ function handleMessage(sender_psid, received_message) {
 • Price: $${userSession.selectedFood.price}
 • Description: ${userSession.selectedFood.description}
 
-📍 Delivery Address:
-${userSession.address}
-
+📍 Delivery Address: ${userSession.address}
 📞 Contact: ${userSession.phone}
-
 💳 Payment Method: Cash on Delivery
-
 ⏰ Estimated delivery time: 30-45 minutes
 
-Thank you for your order! Our delivery team will contact you shortly.
+Thank you for your order! Our delivery team will contact you shortly.`;
+      }
+      
+      orderSummary += `
 
-Type 'menu' to see our full menu or order again! 🍕🍔
-      `;
+Type 'menu' to see our full menu or order again! 🍕🍔`;
       
       response = { "text": orderSummary };
       
@@ -156,6 +203,56 @@ What would you like to do?`
     };
   }
 
+  callSendAPI(sender_psid, response);
+}
+
+// Handle shopping cart orders
+function handleCartOrder(cartData) {
+  console.log('Processing cart order:', cartData);
+  
+  const { sender, recipient, order } = cartData;
+  const sender_psid = sender.id;
+  
+  // Calculate total
+  let total = 0;
+  let orderSummary = '🛒 **CART ORDER RECEIVED** 🛒\n\n';
+  
+  order.products.forEach(product => {
+    const itemTotal = product.unit_price * product.quantity;
+    total += itemTotal;
+    
+    orderSummary += `• ${product.name}\n`;
+    orderSummary += `  Qty: ${product.quantity} × ${product.unit_price} ${product.currency}\n`;
+    orderSummary += `  Subtotal: ${itemTotal} ${product.currency}\n\n`;
+  });
+  
+  orderSummary += `💰 **Total: ${total} ${order.products[0]?.currency || 'THB'}**\n\n`;
+  
+  if (order.note) {
+    orderSummary += `📝 Note: ${order.note}\n\n`;
+  }
+  
+  orderSummary += `📍 **Next Steps:**\n`;
+  orderSummary += `Please provide your delivery address to complete the order.\n\n`;
+  orderSummary += `🚚 Estimated delivery: 30-45 minutes\n`;
+  orderSummary += `💳 Payment: Cash on Delivery`;
+  
+  // Initialize session for address collection
+  if (!userSessions[sender_psid]) {
+    userSessions[sender_psid] = { step: 'start' };
+  }
+  
+  userSessions[sender_psid].cartOrder = {
+    products: order.products,
+    total: total,
+    currency: order.products[0]?.currency || 'THB',
+    note: order.note,
+    source: order.source
+  };
+  userSessions[sender_psid].step = 'awaiting_address';
+  
+  // Send response
+  const response = { "text": orderSummary };
   callSendAPI(sender_psid, response);
 }
 
