@@ -19,8 +19,21 @@ const userSessions = {};
 
 // Load products from Supabase on startup
 async function loadProducts() {
+  console.log('🔄 Loading products from Supabase...');
+  
   try {
+    // Test if environment variables are available
+    if (!process.env.SUPABASE_ANON_KEY) {
+      throw new Error('SUPABASE_ANON_KEY environment variable is not set. Please check your .env file.');
+    }
+
     const products = await db.getAllProducts();
+    
+    if (!products || products.length === 0) {
+      console.warn('⚠️  No products found in Supabase database. Using fallback menu.');
+      throw new Error('No products found in database');
+    }
+
     foodMenu = {};
     products.forEach(product => {
       foodMenu[product.code] = {
@@ -31,9 +44,25 @@ async function loadProducts() {
         category: product.category
       };
     });
-    console.log(`✅ Loaded ${products.length} products from Supabase`);
+    console.log(`✅ Successfully loaded ${products.length} products from Supabase`);
+    console.log(`📋 Available product codes: ${Object.keys(foodMenu).join(', ')}`);
+    
   } catch (error) {
-    console.error('❌ Error loading products from Supabase:', error);
+    console.error('❌ Error loading products from Supabase:');
+    console.error(`   Message: ${error.message}`);
+    console.error(`   Stack: ${error.stack?.split('\n')[1] || 'N/A'}`);
+    
+    // Check specific error types
+    if (error.message?.includes('JWT')) {
+      console.error('🔑 Authentication Error: Invalid Supabase key');
+    } else if (error.message?.includes('fetch')) {
+      console.error('🌐 Network Error: Cannot reach Supabase server');
+    } else if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
+      console.error('🗃️  Database Error: Products table does not exist. Run database setup.');
+    }
+    
+    console.log('🔄 Falling back to hardcoded menu...');
+    
     // Fallback to hardcoded menu if database fails
     foodMenu = {
       'F001': { name: 'Margherita Pizza', price: 100.99, description: 'Classic pizza with tomato sauce, mozzarella, and basil' },
@@ -45,6 +74,9 @@ async function loadProducts() {
       'F007': { name: 'BBQ Ribs', price: 779.99, description: 'Slow-cooked ribs with BBQ sauce and coleslaw' },
       'F008': { name: 'Chocolate Cake', price: 26.99, description: 'Rich chocolate cake with chocolate frosting' }
     };
+    
+    console.log(`📋 Using fallback menu with ${Object.keys(foodMenu).length} items`);
+    console.log(`⚠️  Orders will work but won't be saved to database until Supabase is fixed`);
   }
 }
 
@@ -211,11 +243,26 @@ async function handleMessage(sender_psid, received_message) {
 Thank you for your order! Our delivery team will contact you shortly.`;
 
       } catch (error) {
-        console.error('Error saving order to database:', error);
+        console.error('❌ Error saving order to database:');
+        console.error(`   Message: ${error.message}`);
+        console.error(`   Code: ${error.code || 'N/A'}`);
+        console.error(`   Details: ${error.details || 'N/A'}`);
+        console.error(`   Stack: ${error.stack?.split('\n')[1] || 'N/A'}`);
+        
+        // Provide specific error feedback
+        let errorReason = 'technical issue with our system';
+        if (error.message?.includes('JWT')) {
+          errorReason = 'authentication issue with our database';
+        } else if (error.message?.includes('relation') && error.message?.includes('does not exist')) {
+          errorReason = 'database configuration issue';
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          errorReason = 'network connectivity issue';
+        }
+        
         orderSummary = `
 🎉 Order Received! 🎉
 
-Your order has been received and our team has been notified. However, there was a technical issue with our system. Please save this conversation as your order confirmation.
+Your order has been received and our team has been notified. However, there was a ${errorReason}. Please save this conversation as your order confirmation.
 
 📍 Delivery Address: ${userSession.address}
 📞 Contact: ${userSession.phone}
